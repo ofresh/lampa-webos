@@ -3,6 +3,9 @@ name: Build IPK
 on:
   push:
     branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/build.yml'
   workflow_dispatch:
 
 permissions:

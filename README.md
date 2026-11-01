@@ -22,6 +22,18 @@
 
 > Режим розробника діє 50 днів. Продовжити можна кнопкою **Extend** у Developer Mode або в Dev Manager. Якщо термін мине, встановлені застосунки зникнуть.
 
+### Автопродовження Developer Mode
+
+У репо є workflow, який щодня продовжує режим розробника, тому застосунки не зникають.
+
+1. Дізнайся токен телевізора (режим розробника має бути увімкнений):
+   - **webOS Dev Manager**: відкрий телевізор → **Info** (або **Device Info**) → там є Dev Mode token / Renew script. Скопіюй значення `sessionToken`.
+   - або командою: `ares-novacom --device tv --run "cat /var/luna/preferences/devsecret"`
+2. Додай його в GitHub: **Settings → Secrets and variables → Actions → New repository secret**, назва `DEVMODE_TOKEN`.
+3. Перейди в **Actions → Renew LG Dev Mode → Run workflow**, щоб перевірити. У Developer Mode на телевізорі таймер має знову показати ~50 днів (999:xx годин).
+
+Далі продовження йде автоматично щодня. Якщо LG відхилить токен, GitHub надішле лист про помилку.
+
 ### Спосіб 2: Homebrew Channel (root)
 
 Якщо на телевізорі є root і [Homebrew Channel](https://github.com/webosbrew/webos-homebrew-channel), просто встанови `.ipk` через Dev Manager. Тоді нічого не злітає через 50 днів.

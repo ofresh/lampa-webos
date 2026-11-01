@@ -1,0 +1,47 @@
+name: Renew LG Dev Mode
+
+on:
+  schedule:
+    - cron: "17 3 * * *"   # щодня о 03:17 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check token
+        env:
+          TOKEN: ${{ secrets.DEVMODE_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Немає секрету DEVMODE_TOKEN. Див. README, розділ «Автопродовження»."
+            exit 1
+          fi
+
+      - name: Renew session
+        env:
+          TOKEN: ${{ secrets.DEVMODE_TOKEN }}
+        run: |
+          RESP=$(curl -fsS --retry 3 "https://developer.lge.com/secure/ResetDevModeSession.dev?sessionToken=${TOKEN}")
+          echo "Продовжено. Відповідь LG:"
+          echo "$RESP" | head -c 500; echo
+          if echo "$RESP" | grep -qiE '"result" *: *"(fail|error)"|invalid|expired'; then
+            echo "::error::LG не прийняв токен. Можливо, режим розробника вже вимкнувся або токен змінився."
+            exit 1
+          fi
+
+      # GitHub вимикає розклад у репо без активності 60 днів, тому раз на місяць робимо коміт.
+      - uses: actions/checkout@v4
+      - name: Keepalive
+        run: |
+          if [ "$(date -u +%d)" = "01" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            date -u +"%Y-%m-%dT%H:%M:%SZ" > .last-renew
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .last-renew
+            git commit -m "keepalive: dev mode renewed" || exit 0
+            git push
+          fi
