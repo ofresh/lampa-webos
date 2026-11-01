@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <title>Lampa</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #1d1f20; color: #fff;
+      font-family: sans-serif; display: flex; align-items: center; justify-content: center; }
+    #box { text-align: center; font-size: 36px; }
+    #hint { font-size: 24px; opacity: .6; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div id="box">
+    <div id="msg">Завантаження Lampa…</div>
+    <div id="hint"></div>
+  </div>
+  <script>
+    // Адреса Lampa. Якщо основний домен недоступний, змініть тут і перезберіть .ipk
+    var LAMPA_URL = 'http://lampa.mx';
+    setTimeout(function () {
+      document.getElementById('hint').textContent = 'Якщо завантаження зависло, перевірте інтернет';
+    }, 10000);
+    location.replace(LAMPA_URL);
+  </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+name: Build IPK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install webOS CLI
+        run: npm install -g @webos-tools/cli
+
+      - name: Package with ares-package
+        run: |
+          mkdir -p dist
+          ares-package app -o dist
+
+      - name: Read version
+        id: ver
+        run: echo "version=$(jq -r .version app/appinfo.json)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lampa-ipk
+          path: dist/*.ipk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: Lampa для LG webOS v${{ steps.ver.outputs.version }}
+          files: dist/*.ipk
+          make_latest: true

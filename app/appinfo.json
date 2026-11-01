@@ -1,0 +1,14 @@
+{
+  "id": "com.ofresh.lampa",
+  "version": "1.0.0",
+  "vendor": "ofresh",
+  "type": "web",
+  "main": "index.html",
+  "title": "Lampa",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "bgColor": "#1d1f20",
+  "resolution": "1920x1080",
+  "disableBackHistoryAPI": true,
+  "transparent": false
+}
