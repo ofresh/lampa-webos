@@ -2,7 +2,15 @@
 
 Нативний застосунок-лаунчер [Lampa](http://lampa.mx) для телевізорів LG, для тих, у кого Lampa немає в LG Content Store.
 
-Застосунок відкриває Lampa на весь екран із власною іконкою в меню телевізора. Кнопка «Назад» на пульті передається самій Lampa.
+Lampa збирається з [вихідного коду](https://github.com/yumata/lampa-source) **без реклами**: без прероликів перед відео, банерів у плеєрі та нагадувань про CUB Premium. Увесь код Lampa лежить усередині `.ipk` і не підвантажується з інтернету, тому реклама не повернеться оновленням із сервера.
+
+Що саме змінено, видно в [`patches/disable_ads.py`](patches/disable_ads.py). Lampa поширюється за ліцензією GPL-2.0, вихідний код є в upstream-репо, а зміни лежать тут.
+
+> Якщо хочеш підтримати автора Lampa, оформи [CUB Premium](https://cub.red/premium): він також прибирає рекламу й відкриває додаткові функції.
+
+## Оновлення Lampa
+
+Відкрий **Actions → Build IPK → Run workflow**. Збереться остання версія Lampa, вийде новий реліз, і його `.ipk` треба встановити поверх старого. Налаштування й закладки збережуться.
 
 ## Завантажити
 
@@ -51,12 +59,4 @@ ares-install --device tv com.ofresh.lampa_1.0.0_all.ipk
 
 ## Самостійна збірка
 
-```bash
-./scripts/build-ipk.sh      # без залежностей, результат у dist/
-# або
-ares-package app -o dist
-```
-
-## Змінити адресу Lampa
-
-Якщо `lampa.mx` недоступний, зміни `LAMPA_URL` у [`app/index.html`](app/index.html), підвищ `version` в [`app/appinfo.json`](app/appinfo.json) і зроби push. Новий реліз збереться автоматично.
+Дивись кроки в [`.github/workflows/build.yml`](.github/workflows/build.yml): клон `lampa-source`, `patches/disable_ads.py`, `gulp`, потім `ares-package pkg` (або `./scripts/build-ipk.sh pkg`).

@@ -5,8 +5,15 @@ on:
     branches: [main]
     paths:
       - 'app/**'
+      - 'patches/**'
+      - 'scripts/**'
       - '.github/workflows/build.yml'
   workflow_dispatch:
+    inputs:
+      lampa_ref:
+        description: "Гілка/тег/коміт lampa-source (порожньо = остання версія)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -21,17 +28,46 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install webOS CLI
-        run: npm install -g @webos-tools/cli
-
-      - name: Package with ares-package
+      - name: Get Lampa source
         run: |
-          mkdir -p dist
-          ares-package app -o dist
+          git clone https://github.com/yumata/lampa-source lampa-source
+          cd lampa-source
+          if [ -n "${{ github.event.inputs.lampa_ref }}" ]; then git checkout "${{ github.event.inputs.lampa_ref }}"; fi
+          echo "LAMPA_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+          echo "LAMPA_VER=$(grep -oP "app_version: '\K[^']+" src/core/manifest.js)" >> "$GITHUB_ENV"
 
-      - name: Read version
-        id: ver
-        run: echo "version=$(jq -r .version app/appinfo.json)" >> "$GITHUB_OUTPUT"
+      - name: Disable ads
+        run: python3 patches/disable_ads.py lampa-source
+
+      - name: Build Lampa
+        working-directory: lampa-source
+        run: |
+          npm install --no-audit --no-fund
+          # Задача merge (rollup -> dest/app.js) не експортована в gulpfile, експортуємо її
+          echo "exports.ci_merge = merge;" >> gulpfile.js
+          npx gulp ci_merge
+          test -s dest/app.js || { echo "::error::dest/app.js не зібрано"; exit 1; }
+          npx gulp pack_github
+          test -s build/github/lampa/app.min.js || { echo "::error::app.min.js не зібрано"; exit 1; }
+
+      - name: Assemble webOS app
+        run: |
+          rm -rf pkg && mkdir pkg
+          cp -r lampa-source/build/github/lampa/. pkg/
+          rm -rf pkg/Dockerfile pkg/README.md pkg/SECURITY.md pkg/msx pkg/msx-logo.png pkg/og.png pkg/assembly.json
+          cp app/appinfo.json app/icon.png app/largeIcon.png pkg/
+          VERSION="1.1.${{ github.run_number }}"
+          jq --arg v "$VERSION" '.version = $v' app/appinfo.json > pkg/appinfo.json
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+          # Застосунок має бути повністю локальним
+          grep -q "var lampa_url *= *''" pkg/index.html
+
+      - name: Package
+        run: |
+          npm install -g @webos-tools/cli
+          mkdir -p dist
+          ares-package pkg -o dist
+          ls -la dist
 
       - uses: actions/upload-artifact@v4
         with:
@@ -41,7 +77,10 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.ver.outputs.version }}
-          name: Lampa для LG webOS v${{ steps.ver.outputs.version }}
+          tag_name: v${{ env.VERSION }}
+          name: Lampa без реклами v${{ env.VERSION }}
+          body: |
+            Lampa ${{ env.LAMPA_VER }} (lampa-source@${{ env.LAMPA_SHA }}), зібрана з вихідного коду без реклами.
+            Застосунок повністю локальний: код Lampa всередині .ipk і не підвантажується з інтернету.
           files: dist/*.ipk
           make_latest: true

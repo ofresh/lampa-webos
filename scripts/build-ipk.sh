@@ -2,12 +2,13 @@
 # Збирає .ipk без додаткових інструментів (потрібні лише tar, ar, python3).
 set -euo pipefail
 cd "$(dirname "$0")/.."
-ID=$(python3 -c "import json;print(json.load(open('app/appinfo.json'))['id'])")
-VER=$(python3 -c "import json;print(json.load(open('app/appinfo.json'))['version'])")
+SRC="${1:-pkg}"  # папка з готовим застосунком (див. workflow)
+ID=$(python3 -c "import json;print(json.load(open('$SRC/appinfo.json'))['id'])")
+VER=$(python3 -c "import json;print(json.load(open('$SRC/appinfo.json'))['version'])")
 OUT="dist/${ID}_${VER}_all.ipk"
 TMP=$(mktemp -d)
 mkdir -p "$TMP/data/usr/palm/applications/$ID" "$TMP/control" dist
-cp -r app/. "$TMP/data/usr/palm/applications/$ID/"
+cp -r "$SRC"/. "$TMP/data/usr/palm/applications/$ID/"
 SIZE=$(du -sk "$TMP/data" | cut -f1)
 cat > "$TMP/control/control" <<CTRL
 Package: $ID
